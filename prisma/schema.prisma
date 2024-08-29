@@ -12,6 +12,14 @@ enum Role {
   ADMIN
 }
 
+enum OrderStatus {
+  NEW
+  CONFIRMED
+  SHIPPING
+  PENDING
+  CANCELED
+}
+
 // User
 model User {
   id             Int      @id @default(autoincrement())
@@ -28,8 +36,10 @@ model User {
   created_at     DateTime @default(now()) @db.Timestamptz
   updated_at     DateTime @updatedAt @db.Timestamptz
 
-  userAddress UserAddress[]
-  UserPayment UserPayment[]
+  userAddress     UserAddress[]
+  userPayment     UserPayment[]
+  shoppingSession ShoppingSession?
+  orderDetails    OrderDetails?
 }
 
 model UserAddress {
@@ -70,9 +80,11 @@ model Product {
   created_at   DateTime @default(now()) @db.Timestamptz
   updated_at   DateTime @updatedAt @db.Timestamptz
 
-  ProductCategory  ProductCategory  @relation(fields: [category_id], references: [id])
-  ProductInventory ProductInventory @relation(fields: [inventory_id], references: [id])
-  ProductDiscount  ProductDiscount? @relation(fields: [discount_id], references: [id])
+  productCategory  ProductCategory  @relation(fields: [category_id], references: [id])
+  productInventory ProductInventory @relation(fields: [inventory_id], references: [id])
+  productDiscount  ProductDiscount? @relation(fields: [discount_id], references: [id])
+  cartItem         CartItem?
+  orderItems       OrderItems?
 }
 
 model ProductCategory {
@@ -104,4 +116,65 @@ model ProductDiscount {
   updated_at          DateTime @updatedAt @db.Timestamptz
 
   product Product[]
+}
+
+model CartItem {
+  id         Int      @id @default(autoincrement())
+  session_id Int      @unique
+  product_id Int      @unique
+  quantity   Int      @default(1)
+  created_at DateTime @default(now()) @db.Timestamptz
+  updated_at DateTime @updatedAt @db.Timestamptz
+
+  product         Product         @relation(fields: [product_id], references: [id])
+  shoppingSession ShoppingSession @relation(fields: [session_id], references: [id])
+}
+
+model ShoppingSession {
+  id         Int      @id @default(autoincrement())
+  user_id    Int      @unique
+  total      Decimal
+  created_at DateTime @default(now()) @db.Timestamptz
+  updated_at DateTime @updatedAt @db.Timestamptz
+
+  cartItem CartItem?
+  user     User      @relation(fields: [user_id], references: [id])
+}
+
+model OrderItems {
+  id         Int      @id @default(autoincrement())
+  order_id   Int
+  product_id Int      @unique
+  quantity   Int      @default(1)
+  created_at DateTime @default(now()) @db.Timestamptz
+  updated_at DateTime @updatedAt @db.Timestamptz
+
+  orderDetails OrderDetails @relation(fields: [order_id], references: [id])
+  product      Product      @relation(fields: [product_id], references: [id])
+}
+
+model OrderDetails {
+  id         Int         @id @default(autoincrement())
+  user_id    Int         @unique
+  status     OrderStatus @default(NEW)
+  total      Int         @default(1)
+  payment_id Int         @unique
+  created_at DateTime    @default(now()) @db.Timestamptz
+  updated_at DateTime    @updatedAt @db.Timestamptz
+
+  orderItems    OrderItems[]
+  user          User          @relation(fields: [user_id], references: [id])
+  paymentDetail PaymentDetail @relation(fields: [payment_id], references: [id])
+}
+
+model PaymentDetail {
+  id         Int      @id @default(autoincrement())
+  order_id   Int
+  amount     Int
+  provider   String
+  status     String
+  created_at DateTime @default(now()) @db.Timestamptz
+  updated_at DateTime @updatedAt @db.Timestamptz
+
+  OrderDetails OrderDetails?
 }
