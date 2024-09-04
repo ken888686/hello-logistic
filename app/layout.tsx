@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import MainHeader from "./components/MainHeader";
+import SessionWrapper from "./components/SessionWrapper";
 import "./globals.scss";
 
 export const metadata: Metadata = {
@@ -12,8 +14,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body>{children}</body>
-    </html>
+    <SessionWrapper>
+      <html lang="en">
+        <body>
+          <MainHeader />
+          {children}
+        </body>
+      </html>
+    </SessionWrapper>
   );
 }
